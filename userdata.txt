@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+
+# userdata for c5d
+export HOME="/root"
+
+# Install docker and various other packages.
+apt-get update && apt-get install -y git python-pip # awscli
+wget -qO- https://get.docker.com/ | sh
+usermod -aG docker ubuntu
+pip install docker-compose
+
+DOCKER_SETTINGS="[Service]
+ExecStart=
+ExecStart=/usr/bin/dockerd -g /mnt"
+
+mkdir /etc/systemd/system/docker.service.d/
+echo -e "$DOCKER_SETTINGS" >> /etc/systemd/system/docker.service.d/docker.conf
+systemctl daemon-reload
+systemctl restart docker
+
+
+# Mount SSD.
+BIG=$(lsblk -b | grep nvme | awk '{print $4 " " $1}' | sort -k 1 -r -n | \
+    head -n 1 | awk '{print $2}')
+EXT="/dev/$BIG"
+echo "Mounting $EXT"
+mkfs -t ext4 "$EXT"
+mount "$EXT" /mnt
+chown -R ubuntu /mnt
+
+# Partition and set up swap space.
+dd if=/dev/zero of=/mnt/swapfile bs=1M count=8192
+chmod 600 /mnt/swapfile
+mkswap /mnt/swapfile
+swapon /mnt/swapfile
+swapon -s

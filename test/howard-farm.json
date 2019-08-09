@@ -1,0 +1,32 @@
+[
+    {
+        "type": "readers.ept",
+        "filename": "https://s3-us-west-2.amazonaws.com/usgs-lidar-public/MN_FullState",
+        "bounds": "([-10370491.650, -10369362.990], [5431874, 5434132])"
+    },
+    {
+        "type": "filters.assign",
+        "assignment": "Classification[:]=0"
+    },
+    {
+        "type": "filters.smrf",
+        "ignore": "Classification[7:7]"
+    },
+    {
+        "type": "writers.gdal",
+        "resolution": 2.0,
+        "user_data": {
+            "TagSet": [
+                {
+                    "Key": "type",
+                    "Value": "cornfield"
+                },
+                {
+                    "Key": "name",
+                    "Value": "howardfarm"
+                }
+            ]
+        },
+        "filename": "howard-farm.tif"
+    }
+]
