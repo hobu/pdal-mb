@@ -1,25 +1,21 @@
 #!/bin/bash
 
-echo "Updating $LAMBDA_FUNCTION_NAME in $AWS_REGION for $AWS_PROFILE"
 
+#./create-event-source-mapping.sh "pdal-info"  "download" "icesat_lambda_execution"
 LAMBDA_FUNCTION_NAME="$1"
-LAMBDA_METHOD_NAME="$2"
-LAMBDA_EVENT_QUEUE="$3"
-LAMBDA_EXECUTION_ROLE="$4"
+LAMBDA_EVENT_QUEUE="$2"
+LAMBDA_EXECUTION_ROLE="$3"
 
-#AWS_PROFILE="icesat"
-#AWS_REGION="us-east-1"
-echo "Updating $LAMBDA_FUNCTION_NAME in $AWS_REGION for $AWS_PROFILE"
+PDAL_LAMBDA_LAYER_ARN="arn:aws:lambda:us-east-1:163178234892:layer:pdal:14"
 
-./package-lambda-function.sh lambda_function.py lambda_function.zip package
 
-aws lambda update-function-code \
+echo "Creating $LAMBDA_FUNCTION_NAME in $AWS_REGION for $AWS_PROFILE"
+
+ROLE=$(aws iam get-role \
     --profile $AWS_PROFILE \
-    --region $AWS_REGION \
-    --function-name $LAMBDA_FUNCTION_NAME \
-    --publish \
-    --zip-file fileb://./lambda_function.zip
+    --role-name $LAMBDA_EXECUTION_ROLE )
 
+ROLEARN=$(echo $ROLE |jq .Role.Arn -r)
 
 QUEUEURL=$(aws sqs get-queue-url --profile $AWS_PROFILE --queue-name $LAMBDA_EVENT_QUEUE-dlq --region $AWS_REGION)
 QUEUEURL=$(echo $QUEUEURL |jq .QueueUrl -r)
@@ -43,12 +39,22 @@ UUID=$(aws lambda list-event-source-mappings \
         --region $AWS_REGION \
         --profile $AWS_PROFILE | jq -r '.EventSourceMappings[] | select (.EventSourceArn == "'$QUEUEARN'")|.UUID')
 
-
-echo "Event UUID: $UUID"
-
-aws lambda update-event-source-mapping \
+if test -z "$UUID"
+then
+    # nothing to delete
+    echo "uuid is empty"
+else
+aws lambda delete-event-source-mapping \
+    --uuid $UUID \
     --profile $AWS_PROFILE \
+    --region $AWS_REGION
+
+sleep 60
+
+fi
+
+aws lambda create-event-source-mapping \
+    --event-source-arn $QUEUEARN \
     --region $AWS_REGION \
-    --function-name  $LAMBDA_FUNCTION_NAME \
-    --enabled \
-    --uuid  $UUID
+    --profile $AWS_PROFILE \
+    --function-name $LAMBDA_FUNCTION_NAME

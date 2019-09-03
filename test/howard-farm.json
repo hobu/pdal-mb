@@ -18,15 +18,27 @@
         "user_data": {
             "TagSet": [
                 {
-                    "Key": "type",
-                    "Value": "cornfield"
+                    "Key": "grid-type",
+                    "Value": "LIDAR, IMAGE, DTM, ETC, "
+                },
+                {
+                    "Key": "grid-program",
+                    "Value": "MACHETE"
+                },
+                {
+                    "Key": "grid-something",
+                    "Value": "some other thing"
+                },
+                {
+                    "Key": "grid-identifier",
+                    "Value": "hash-to-grid"
                 },
                 {
                     "Key": "name",
-                    "Value": "howardfarm"
+                    "Value": "howardfarm-in-minnesota"
                 }
             ]
         },
-        "filename": "howard-farm.tif"
+        "filename": "howard-farm-lesley.tif"
     }
 ]

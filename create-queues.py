@@ -6,6 +6,7 @@ import json
 
 profile = os.environ['AWS_PROFILE']
 region = os.environ['AWS_REGION']
+output_bucket = sys.argv[2]
 
 boto3.setup_default_session(region_name=region,
                             profile_name=profile)
@@ -13,7 +14,7 @@ boto3.setup_default_session(region_name=region,
 sqs = boto3.client('sqs')
 
 VISIBILITY_TIMEOUT = 900
-queues = sys.argv[1:]
+queues = [sys.argv[1]]
 for queue in queues:
 
     sys.stderr.write('Creating queue %s in region %s for profile %s\n' % (queue, region, profile))
@@ -56,5 +57,13 @@ for queue in queues:
             'VisibilityTimeout': '%d' % VISIBILITY_TIMEOUT
         }
     )
+
+    QUEUE_URL = response['QueueUrl']
+    response = sqs.tag_queue(
+            QueueUrl = QUEUE_URL,
+            Tags={
+                'target': output_bucket
+            }
+            )
 
 
